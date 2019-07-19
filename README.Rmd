@@ -10,33 +10,59 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Ribosome footprinting
 
+```{bash, eval=FALSE}
+python3 ribo-profiling/rpfs_by_codon.py
+```
+
 Illustrates position of the "ribosome shadow" established by ribosomes stalled at histidine codons in cells starved for histidine and histidinyl-tRNAs.
 
-```{r rpf_plot, message=FALSE}
+```{r load_data, message=FALSE}
 library(tidyverse)
 library(cowplot)
 
 tbl <- read_tsv(
-  "ribo-profiling/rpfs.tsv.gz",
-  col_names = c("codon", "offset", "signal")
-) %>%
-  group_by(codon) %>%
-  mutate(prop.signal = signal / sum(signal))
+  "ribo-profiling/rpfs.iso.tsv.gz",
+  col_names = c("codon", "aa", "offset", "signal")
+)
 
-ggplot(tbl, aes(offset, prop.signal)) +
-  geom_col() +
-  facet_wrap(~ codon) + 
-  theme_minimal_hgrid() +
-  labs(
-    x = "Codon offset",
-    y = "Proportion of reads"
-  )
+tbl
+```
+
+### By amino acid
+
+```{r rpf_plot, message=FALSE}
+group_by(tbl, aa) %>%
+  mutate(prop.signal = signal / sum(signal)) %>%
+  ggplot(aes(offset, prop.signal)) +
+    geom_col() +
+    facet_wrap(~ aa) + 
+    theme_minimal_hgrid() +
+    labs(
+      x = "Codon offset",
+      y = "Proportion of reads"
+    )
+```
+
+### By isodecoder
+
+```{r rpf_plot_iso, message=FALSE}
+tbl %>%
+  group_by(codon) %>%
+  mutate(prop.signal = signal / sum(signal)) %>%
+  ggplot(aes(offset, prop.signal)) +
+    geom_col() +
+    facet_wrap(~ codon) + 
+    theme_minimal_hgrid() +
+    labs(
+      x = "Codon offset",
+      y = "Proportion of reads"
+    )
 ```
 
 ### Exercises
 
 1. Include data from minus strand genes.
 
-1. Break up by tRNA isodecoder.
+1. Break up by tRNA isodecoder (done, takes a few hours to run)
 
 

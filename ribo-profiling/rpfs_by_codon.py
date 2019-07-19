@@ -1,15 +1,13 @@
 #! /usr/bin/env python3
 
 '''
-Analyze ribosome profiling data.
+Analyze ribosome profiling data. Goal is to visualize the "ribosome shadow".
 
-Goal is to visualize the "ribosome shadow".
+Data is from Guydosh et al (2014) Mol Cell. Sample is WT yeast treated with
+3-aminotriazole for 2 hours to inhibit histidine synthesis, depleting histidinyl-tRNAs
+and stalling ribosomes at histidine codons.
 
-Strategy: XXX
-
-Data is from Guydosh et al (2014) Mol Cell
-
-Output is a TSV that we can plot in R (or matplotlib, if you want
+Output are TSV that we can plot in R (or matplotlib, if you want
 to wait).
 '''
 
@@ -36,7 +34,7 @@ def main():
     codons = load_gene_codons(genes)
 
     # map rpf signal onto codons
-    print(">> mapping rpf signal to codons ... ", file=sys.stderr, end='')
+    print(">> mapping rpf signal to codons ... ", file=sys.stderr)
     codon_signal = codons.map(rpfs, c=4, o='sum')
 
     codon_table = make_codon_table()
@@ -50,30 +48,31 @@ def main():
         if signal == '.': continue
 
         codon_seq = genome[ivl.chrom][ivl.start:ivl.end].seq
-        codon_aa = codon_table[codon_seq]
 
         # dict[gene][codon_pos] = (codon_aa, signal)
-        codon_sums[ivl.name][int(ivl.score)] = (codon_aa, int(signal))
+        codon_sums[ivl.name][int(ivl.score)] = (codon_seq, int(signal))
 
     print(">> calcualting signal at codon offsets ...", file=sys.stderr)
+
     codon_offset_signal = defaultdict(Counter)
     for gene, codon_data in codon_sums.items():
         for codon_pos, data in codon_sums[gene].items():
 
-            codon, signal = data
+            codon_seq, signal = data
 
-            for offset in range(-10, 10):
+            for offset in range(-10, 11):
                 codon_offset = codon_pos + offset
                 try:
                     _, signal_offset = codon_sums[gene][codon_offset]
                 except KeyError:
                     continue
 
-                codon_offset_signal[codon][offset] += signal_offset
+                codon_offset_signal[codon_seq][offset] += signal_offset
 
-    for codon in codon_offset_signal:
-        for offset, signal in codon_offset_signal[codon].items():
-            print('\t'.join(map(str, [codon, offset, signal])))
+    for codon_seq in codon_offset_signal:
+        codon_aa = codon_table[codon_seq]
+        for offset, signal in codon_offset_signal[codon_seq].items():
+            print('\t'.join(map(str, [codon_seq, codon_aa, offset, signal])))
 
 def make_codon_table():
     tbl = dict()

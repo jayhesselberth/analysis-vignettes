@@ -1,0 +1,84 @@
+---
+title: "Case study in ribosome footprints"
+author: "Jay Hesselberth"
+date: "7/16/2019"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load_data}
+library(valr)
+library(tidyverse, quietly = TRUE)
+
+library(reticulate)
+use_python("/usr/local/bin/python3", required = TRUE)
+
+# get positive strand genes with single exons
+genes <- read_bed12("sgdGenes.sacCer1.bed.gz") %>%
+  filter(exon_count == 1 & strand == "+")
+
+codon_table <- read_tsv("codon-table.txt.gz", col_names = TRUE) %>%
+  setNames(c("aa", "codon", "fraction", "freq", "num"))
+
+# ribosome profiling in WT yeast treated with 3-aminotriazole, which depletes
+# histidine and histidinyl-tRNAs, stalling ribosomes at His codons.
+signal <- read_bedgraph("SRR1042864.pos.bg.gz")
+```
+
+## Analysis strategy
+
+Goal: Examine the ribosome shadow relative to codon classes (e.g., all His codons).
+
+Strategy: Map ribosome-protected fragments (RPFs) relative to codon positions.
+
+Workflow:
+
+1. Identify genomic coordinates and identity of each codon (start and end).
+
+1. Cross-reference codon data with signal data.
+
+1. Calculate
+
+```{python build_tables}
+from collections import defaultdict
+from pyfaidx import Fasta
+
+# must be compressed with `bgzip` (from samtools dist), not gzip
+genome = Fasta("sacCer1.fa.gz")
+
+codons = defaultdict(set)
+
+for index, row in r.genes.iterrows():
+  chrom = row['chrom']
+  start = row['start']
+  end = row['end']
+
+  # start of each codon, by 3's
+  for cstart in range(start, end, 3):
+ 
+    cend = cstart + 3 
+    seq = genome[chrom][cstart:cend].seq
+ 
+    codons[chrom].add((cstart, cend, seq))
+    
+    print(codons.keys())
+  
+# Now expand the codons to each position, keeping the sequence for matching
+# with the codon table later.
+# codons_expand = defaultdict(dict)
+# 
+# for chrom in codons:
+#   for start, end in codons[chrom].items():
+#     for pos in range(start, end):
+#       codons_expand[chrom][pos] = seq
+#       
+```
+
+```{r cross_ref}
+
+```

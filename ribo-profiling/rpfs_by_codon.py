@@ -1,9 +1,5 @@
 #! /usr/bin/env python3
 
-#BSUB -J rpfs_by_codon
-#BSUB -e %J.err
-#BSUB -o %J.out
-
 '''
 Analyze ribosome profiling data.
 
@@ -56,25 +52,27 @@ def main():
         codon_aa = codon_table[codon_seq]
 
         # dict[gene][codon_pos] = (codon_aa, signal)
-        codon_sums[ivl.name][ivl.score] = (codon_aa, signal)
-
-        pdb.set_trace()
+        codon_sums[ivl.name][int(ivl.score)] = (codon_aa, int(signal))
 
     print(">> calcualting signal at codon offsets ...", file=sys.stderr)
     codon_offset_signal = defaultdict(Counter)
-    for gene, codon_pos in codon_sums.items():
-        for offset in range(-20, 20):
-            codon_offset = codon_pos + offset
-            try:
-                signal_offset = codon_sums[gene][codon_offset]
-            except KeyError:
-                continue
-            codon, signal_cur = codon_sums[gene][codon_pos]
-            codon_offset_signal[codon][offset] += signal_offset
+    for gene, codon_data in codon_sums.items():
+        for codon_pos, data in codon_sums[gene].items():
 
-    for codon, offset in codon_offset_signal.items():
-        signal = codon_offset_signal[codon][offset]
-        print([codon, offset, signal], sep = "\t")
+            codon, signal = data
+
+            for offset in range(-10, 10):
+                codon_offset = codon_pos + offset
+                try:
+                    _, signal_offset = codon_sums[gene][codon_offset]
+                except KeyError:
+                    continue
+
+                codon_offset_signal[codon][offset] += signal_offset
+
+    for codon in codon_offset_signal:
+        for offset, signal in codon_offset_signal[codon].items():
+            print('\t'.join(map(str, [codon, offset, signal])))
 
 def make_codon_table():
     tbl = dict()

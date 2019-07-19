@@ -30,3 +30,9 @@ ggplot(tbl, aes(offset, prop.signal)) +
 ```
 
 ![](README_files/figure-gfm/rpf_plot-1.png)<!-- -->
+
+### Exercises
+
+1.  Include data from minus strand genes.
+
+2.  Break up by tRNA isodecoder.

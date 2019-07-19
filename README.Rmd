@@ -32,3 +32,11 @@ ggplot(tbl, aes(offset, prop.signal)) +
     y = "Proportion of reads"
   )
 ```
+
+### Exercises
+
+1. Include data from minus strand genes.
+
+1. Break up by tRNA isodecoder.
+
+

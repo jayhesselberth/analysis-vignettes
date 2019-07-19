@@ -36,7 +36,8 @@ def main():
     codons = load_gene_codons(genes)
 
     # map rpf signal onto codons
-    codon_signal = map_signals(codons, rpfs)
+    print(">> mapping rpf signal to codons ... ", file=sys.stderr, end='')
+    codon_signal = codons.map(rpfs, c=4, o='sum')
 
     codon_table = make_codon_table()
 
@@ -90,15 +91,6 @@ def make_codon_table():
             tbl[codon] = aa
 
     return tbl
-
-def map_signals(codons, rpfs):
-    print(">> mapping rpf signal to codons ... ", file=sys.stderr, end='')
-
-    res = codons.map(rpfs, c=4, o='sum')
-
-    print("done", file=sys.stderr)
-
-    return res
 
 def load_gene_codons(genes):
     '''create BedTool of codon positions via intermediate DataFrame'''
